@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="Chess"
+run/main_scene="uid://dkwfkvju58f84"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -18,3 +19,4 @@ config/icon="res://icon.svg"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+anti_aliasing/quality/msaa_3d=1

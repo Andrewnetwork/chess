@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://1qbc2540i833"]
+
+[ext_resource type="PackedScene" uid="uid://cb5msk6scsy2r" path="res://temp/chess_set_4k.blend" id="1_wuio4"]
+
+[node name="ChessSet" instance=ExtResource("1_wuio4")]
