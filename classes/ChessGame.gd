@@ -27,28 +27,29 @@ var active_piece: ChessPiece
 func get_available_moves(piece: ChessPiece):
 	var moves = []
 	var move = null
-	if piece.type == ChessPiece.PieceType.PAWN:
-		if piece.color == ChessPiece.PieceColor.WHITE:
-			move = piece.location-Vector2i(1,0)
-			if BOARD(move) == EMPTY_SQUARE:
-				# One forward.
-				moves.append(move)
-				
-			move = piece.location-Vector2i(2,0)
-			if piece.location.x == WHITE_STARTING_ROW and BOARD(move) == null:
-				# Two forward, from starting row.
-				moves.append(move)
-		else:
-			# BLACK
-			move = piece.location+Vector2i(1,0)
-			if BOARD(move) == EMPTY_SQUARE:
-				# One forward.
-				moves.append(move)
-				
-			move = piece.location+Vector2i(2,0)
-			if piece.location.x == BLACK_STARTING_ROW and BOARD(move) == null:
-				# Two forward, from starting row.
-				moves.append(move)
+
+	if piece.type == ChessPiece.Type.PAWN: 
+		var flip = -1 if piece.color == ChessPiece.Side.WHITE else 1 
+		var starting_row = WHITE_STARTING_ROW if piece.color == ChessPiece.Side.WHITE else BLACK_STARTING_ROW
+		var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
+		# One forward.
+		move = piece.location+Vector2i(1,0)*flip
+		if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
+			moves.append(move)
+		# Two forward, from starting row.
+		move = piece.location+Vector2i(2,0)*flip
+		if is_move_within_board(move) and piece.location.x == starting_row and BOARD(move) == EMPTY_SQUARE:
+			moves.append(move)
+		# Left diagonal.
+		move = piece.location+Vector2i(1,1)*flip
+		if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
+			moves.append(move)
+		# Right diagonal.
+		move = piece.location+Vector2i(1,-1)*flip
+		if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
+			moves.append(move)
+	elif piece.type == ChessPiece.Type.ROOK:
+		pass
 	return moves
 			
 			
@@ -58,9 +59,6 @@ func get_available_moves(piece: ChessPiece):
 func piece_clicked(piece: ChessPiece):
 	active_piece = piece
 	display_available_moves(piece)
-func finish_move():
-	clear_move_markers()
-	active_piece = null
 func clear_move_markers():
 	for placed_move_marker in move_markers:
 		placed_move_marker.queue_free()
@@ -83,12 +81,22 @@ func display_available_moves(piece: ChessPiece):
 			func (_camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int): 
 				if event is InputEventMouseButton:
 					if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-						piece.obj_ref.position.x = marker.position.x
-						piece.obj_ref.position.z = marker.position.z
-						piece.location = move
-						finish_move())
+						move_piece(piece, move))
 		board.add_child(marker)
 		move_markers.append(marker)
+func move_piece(piece: ChessPiece, new_location: Vector2i):
+	# Update logical model of chess board. 
+	chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
+	chess_board[new_location.x][new_location.y] = piece
+	# Update piece location.
+	piece.location = new_location
+	# Update physical model of chess board.
+	var new_pos = get_cell_center(new_location)
+	piece.obj_ref.position.x = new_pos.x
+	piece.obj_ref.position.z = new_pos.z
+	# Cleanup 
+	clear_move_markers()
+	active_piece = null
 	
 # Setup 
 func _init():
@@ -117,22 +125,22 @@ func setup_board(piece_layout: Array):
 					counters[layout_flag] = 1
 			
 			match layout_flag:
-				BR: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.ROOK
-				BN: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.KNIGHT
-				BB: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.BISHOP
-				BQ: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.QUEEN
-				BK: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.KING
-				BP: piece_color = ChessPiece.PieceColor.BLACK; piece_type = ChessPiece.PieceType.PAWN
-				WR: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.ROOK
-				WN: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.KNIGHT
-				WB: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.BISHOP
-				WQ: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.QUEEN
-				WK: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.KING
-				WP: piece_color = ChessPiece.PieceColor.WHITE; piece_type = ChessPiece.PieceType.PAWN
+				BR: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.ROOK
+				BN: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.KNIGHT
+				BB: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.BISHOP
+				BQ: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.QUEEN
+				BK: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.KING
+				BP: piece_color = ChessPiece.Side.BLACK; piece_type = ChessPiece.Type.PAWN
+				WR: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.ROOK
+				WN: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.KNIGHT
+				WB: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.BISHOP
+				WQ: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.QUEEN
+				WK: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.KING
+				WP: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.PAWN
 			
 			if piece_type != null and piece_color != null:
 				make_piece(row, col, piece_color, piece_type, counters[layout_flag])
-func make_piece(row: int,col: int, color: ChessPiece.PieceColor, type: ChessPiece.PieceType, number: int):
+func make_piece(row: int,col: int, color: ChessPiece.Side, type: ChessPiece.Type, number: int):
 	# TODO: these arrays accompany the ChessPiece enums. Put them in a better place.
 	var piece_ref := get_physical_piece(ChessPiece.color_str[color], ChessPiece.type_str[type], number)
 	var piece = ChessPiece.new(color, type, Vector2i(row, col), piece_ref)
@@ -145,7 +153,9 @@ func make_piece(row: int,col: int, color: ChessPiece.PieceColor, type: ChessPiec
 
 func CB(letter: String, num: int):
 	return chess_board[letter[0].to_ascii_buffer()[0]-65][num-1]
-func BOARD(location: Vector2i):
+func is_move_within_board(move: Vector2i):
+	return move.x >= 0 && move.x <= 7 && move.y >= 0 && move.y <= 7
+func BOARD(location: Vector2i) -> ChessPiece:
 	return chess_board[location.x][location.y]
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
