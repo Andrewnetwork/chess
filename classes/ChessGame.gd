@@ -24,12 +24,14 @@ const classic_piece_layout = [
 @export var first_square_marker: Marker3D
 @export var second_square_marker: Marker3D
 @export var move_marker: PackedScene
+## Reference to the physical model of the chess board. 
 @export var board: Node3D
 @export var sfx_player: AudioStreamPlayer
 
 @export_group("Sound Effects")
 @export var piece_move_sound: AudioStream = preload("res://sound/piece_move.mp3")
 
+## Matrix representing the logical model of the chess board. 
 var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
 var active_piece: ChessPiece
@@ -175,7 +177,7 @@ func start_next_turn():
 		turn_owner = ChessPiece.Side.WHITE
 	var tween = create_tween()
 	tween.tween_property(board, "rotation_degrees:y", 
-		board.rotation_degrees.y-180, 1.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		board.rotation_degrees.y-180, 2 ).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	
 	#board.rotate_y(deg_to_rad(180))
 ## Displays available moves for the given piece by placing clickable MoveMarker's 
@@ -222,13 +224,28 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	return true
 # Setup 
 func _init():
+	_init_board(classic_piece_layout)
+func _ready():
+	_establish_physical_connection()
+## Establishes a connection between the logical model of chess and its physical representation
+## in the game.
+func _establish_physical_connection():
+	for row in chess_board:
+		for cell in row:
+			if cell is ChessPiece:
+				cell.obj_ref = get_physical_piece(cell.get_color_str(), cell.get_type_str(), cell.get_id())
+				cell.obj_ref.input_event.connect(
+					func (_camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int): 
+						if event is InputEventMouseButton:
+							if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+								piece_clicked(cell))
+func _init_board(piece_layout: Array):
+	# Initialize chess board.
 	for col in range(8):
 		var row = []
 		row.resize(8)
 		chess_board.append(row)
-func _ready():
-	setup_board(classic_piece_layout)
-func setup_board(piece_layout: Array):
+	# Add pieces according to the piece_layout.
 	var counters = {}
 	for row in range(8):
 		for col in range(8):
@@ -261,17 +278,8 @@ func setup_board(piece_layout: Array):
 				WP: piece_color = ChessPiece.Side.WHITE; piece_type = ChessPiece.Type.PAWN
 			
 			if piece_type != null and piece_color != null:
-				make_piece(row, col, piece_color, piece_type, counters[layout_flag])
-func make_piece(row: int,col: int, color: ChessPiece.Side, type: ChessPiece.Type, number: int):
-	# TODO: these arrays accompany the ChessPiece enums. Put them in a better place.
-	var piece_ref := get_physical_piece(ChessPiece.color_str[color], ChessPiece.type_str[type], number)
-	var piece = ChessPiece.new(color, type, Vector2i(row, col), piece_ref)
-	piece_ref.input_event.connect(
-		func (_camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int): 
-			if event is InputEventMouseButton:
-				if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-					piece_clicked(piece))
-	chess_board[row][col] = piece 
+				chess_board[row][col] = ChessPiece.new(piece_color,piece_type, 
+					Vector2i(row, col), counters[layout_flag], null)
 func CB(letter: String, num: int):
 	return chess_board[letter[0].to_ascii_buffer()[0]-65][num-1]
 func is_move_within_board(move: Vector2i):
