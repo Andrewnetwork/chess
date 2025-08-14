@@ -38,10 +38,10 @@ func get_available_moves(piece: ChessPiece):
 			move = piece.location+Vector2i(1,0)*flip
 			if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
 				moves.append(move)
-			# Two forward, from starting row.
-			move = piece.location+Vector2i(2,0)*flip
-			if is_move_within_board(move) and piece.location.x == starting_row and BOARD(move) == EMPTY_SQUARE:
-				moves.append(move)
+				# Two forward, from starting row.
+				move = piece.location+Vector2i(2,0)*flip
+				if is_move_within_board(move) and piece.location.x == starting_row and BOARD(move) == EMPTY_SQUARE:
+					moves.append(move)
 			# Left diagonal.
 			move = piece.location+Vector2i(1,1)*flip
 			if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
