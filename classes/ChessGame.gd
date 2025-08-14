@@ -27,11 +27,12 @@ var active_piece: ChessPiece
 func get_available_moves(piece: ChessPiece):
 	var moves = []
 	var move = null
-
+	# Rule parameters.
+	var flip = -1 if piece.color == ChessPiece.Side.WHITE else 1 
+	var starting_row = WHITE_STARTING_ROW if piece.color == ChessPiece.Side.WHITE else BLACK_STARTING_ROW
+	var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
+	
 	if piece.type == ChessPiece.Type.PAWN: 
-		var flip = -1 if piece.color == ChessPiece.Side.WHITE else 1 
-		var starting_row = WHITE_STARTING_ROW if piece.color == ChessPiece.Side.WHITE else BLACK_STARTING_ROW
-		var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
 		# One forward.
 		move = piece.location+Vector2i(1,0)*flip
 		if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
@@ -49,7 +50,42 @@ func get_available_moves(piece: ChessPiece):
 		if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
 			moves.append(move)
 	elif piece.type == ChessPiece.Type.ROOK:
-		pass
+		# Column scan. 
+		#var take_step = func(a, b): for idx in len(a): a[idx] = a[idx]+b[idx]
+		var basis_vectors = [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1), Vector2i(0,-1)]
+		var locations = []
+		locations.resize(4)
+		locations.fill(piece.location)
+	
+		var idx = 0
+		while len(basis_vectors) > 0:
+			locations[idx] += basis_vectors[idx]
+			if is_move_within_board(locations[idx]):
+				if BOARD(locations[idx]) == EMPTY_SQUARE:
+					moves.append(locations[idx])
+				elif BOARD(locations[idx]).color == opponent_side:
+					moves.append(locations[idx])
+					# Done searching in this direction.
+					basis_vectors.remove_at(idx)
+					locations.remove_at(idx)
+					# Removing an element shrinks the array, push the index back by one. 
+					idx -= 1
+				else:
+					# Hit a friendly piece. 
+					basis_vectors.remove_at(idx)
+					locations.remove_at(idx)
+					# Removing an element shrinks the array, push the index back by one. 
+					idx -= 1
+			else:
+				# Out of bounds.
+				basis_vectors.remove_at(idx)
+				locations.remove_at(idx)
+			if idx+1 >= len(basis_vectors):
+				# Loop around until all baisis vectors have led to dead ends.
+				idx = 0
+			else:
+				idx += 1
+		
 	return moves
 			
 			
