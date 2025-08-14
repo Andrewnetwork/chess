@@ -133,7 +133,14 @@ func get_available_moves(piece: ChessPiece):
 					distance += 1
 				else:
 					idx += 1
-	
+		ChessPiece.Type.KING:
+			var king_basis_vectors = [Vector2i(1,0), Vector2i(0,1),Vector2i(1,-1), Vector2i(1,1)]
+			king_basis_vectors.append_array(king_basis_vectors.map(func(basis_vector): return basis_vector*-1))
+			for king_basis_vector in king_basis_vectors:
+				move = piece.location+king_basis_vector
+				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
+					moves.append(move)
+			
 	return moves
 func piece_clicked(piece: ChessPiece):
 	active_piece = piece
