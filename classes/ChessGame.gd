@@ -91,6 +91,26 @@ func get_available_moves(piece: ChessPiece):
 				move = piece.location+knight_basis_vector
 				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
 					moves.append(move)
+		ChessPiece.Type.BISHOP:
+			var bishop_basis_vectors = [Vector2i(1,1),Vector2i(1,-1)]
+			bishop_basis_vectors.append_array(bishop_basis_vectors.map(func(basis_vector): return basis_vector*-1))
+			var distance = 1
+			var idx = 0
+			while len(bishop_basis_vectors) > 0:
+				move = piece.location+bishop_basis_vectors[idx]*distance
+				if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
+					moves.append(move)
+				else:
+					if is_move_within_board(move) and BOARD(move).color == opponent_side:
+						moves.append(move)
+					bishop_basis_vectors.remove_at(idx)
+					idx -= 1
+					
+				if idx+1 >= len(bishop_basis_vectors):
+					idx = 0
+					distance += 1
+				else:
+					idx += 1
 				
 		
 	return moves
