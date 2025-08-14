@@ -24,14 +24,17 @@ var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
 var active_piece: ChessPiece
 
-func get_available_moves(piece: ChessPiece):
-	var moves = []
+func get_available_moves(piece: ChessPiece) -> Array[Vector2i]:
+	# Initialize output array and temp move variable.
+	var moves : Array[Vector2i]
 	var move = null
 	# Rule parameters.
 	var flip = -1 if piece.color == ChessPiece.Side.WHITE else 1 
 	var starting_row = WHITE_STARTING_ROW if piece.color == ChessPiece.Side.WHITE else BLACK_STARTING_ROW
 	var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
-	
+	# Move logic.
+	# TODO: this should be condensed. The movement constraints on the pieces should be represented
+	# at a higher level.
 	match piece.type:
 		ChessPiece.Type.PAWN: 
 			# One forward.
@@ -140,7 +143,6 @@ func get_available_moves(piece: ChessPiece):
 				move = piece.location+king_basis_vector
 				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
 					moves.append(move)
-			
 	return moves
 func piece_clicked(piece: ChessPiece):
 	active_piece = piece
@@ -169,7 +171,15 @@ func display_available_moves(piece: ChessPiece):
 						move_piece(piece, move))
 		board.add_child(marker)
 		move_markers.append(marker)
-func move_piece(piece: ChessPiece, new_location: Vector2i):
+func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
+	var target_square = chess_board[new_location.x][new_location.y]
+	if target_square != EMPTY_SQUARE:
+		if target_square.color != piece.color:
+			# Attack. 
+			target_square.eliminate()
+		else:
+			push_error("Moving a piece onto a pre-existing piece.")
+			return false
 	# Update logical model of chess board. 
 	chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
 	chess_board[new_location.x][new_location.y] = piece
@@ -181,7 +191,8 @@ func move_piece(piece: ChessPiece, new_location: Vector2i):
 	piece.obj_ref.position.z = new_pos.z
 	# Cleanup 
 	clear_move_markers()
-	active_piece = null	
+	active_piece = null
+	return true
 # Setup 
 func _init():
 	for col in range(8):

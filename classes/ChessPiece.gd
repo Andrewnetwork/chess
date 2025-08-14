@@ -16,3 +16,7 @@ func _init(piece_color: ChessPiece.Side, piece_type: Type, piece_location: Vecto
 	type = piece_type
 	location = piece_location
 	obj_ref = piece_obj_ref
+
+func eliminate():
+	obj_ref.queue_free()
+	queue_free()
