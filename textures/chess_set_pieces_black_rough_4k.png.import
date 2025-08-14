@@ -3,22 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cd3k47kf3mte4"
-path.s3tc="res://.godot/imported/chess_set_pieces_black_rough_4k.png-3759eb61ad80fc8d2719faac33d6001b.s3tc.ctex"
+path="res://.godot/imported/chess_set_pieces_black_rough_4k.png-3759eb61ad80fc8d2719faac33d6001b.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://textures/chess_set_pieces_black_rough_4k.png"
-dest_files=["res://.godot/imported/chess_set_pieces_black_rough_4k.png-3759eb61ad80fc8d2719faac33d6001b.s3tc.ctex"]
+dest_files=["res://.godot/imported/chess_set_pieces_black_rough_4k.png-3759eb61ad80fc8d2719faac33d6001b.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.1
 compress/hdr_compression=1
 compress/normal_map=1
 compress/channel_pack=0
