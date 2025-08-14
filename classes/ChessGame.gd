@@ -86,11 +86,9 @@ func get_available_moves(piece: ChessPiece):
 					idx += 1
 		ChessPiece.Type.KNIGHT:
 			var knight_basis_vectors = [Vector2i(2,1), Vector2i(2,-1), Vector2i(1,2), Vector2i(1,-2)]
+			knight_basis_vectors.append_array(knight_basis_vectors.map(func(basis_vector): return basis_vector*-1))
 			for knight_basis_vector in knight_basis_vectors:
 				move = piece.location+knight_basis_vector
-				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
-					moves.append(move)
-				move = piece.location-knight_basis_vector
 				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
 					moves.append(move)
 				
