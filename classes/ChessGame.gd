@@ -15,14 +15,21 @@ const classic_piece_layout = [
 	[WP, WP, WP, WP, WP, WP, WP, WP], #6
 	[WR, WN, WB, WQ, WK, WB, WN, WR], #7
 ]
+
+@export_group("Gameplay")
+## Turn on to rotate the board before starting a turn.
+@export var turn_rotation = true
+@export_group("Visual Components")
 @export var pieces := {"white": {}, "black": {}}
 @export var first_square_marker: Marker3D
 @export var second_square_marker: Marker3D
 @export var move_marker: PackedScene
 @export var board: Node3D
+
 var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
 var active_piece: ChessPiece
+var turn_owner := ChessPiece.Side.WHITE
 
 func get_available_moves(piece: ChessPiece) -> Array[Vector2i]:
 	# Initialize output array and temp move variable.
@@ -145,8 +152,9 @@ func get_available_moves(piece: ChessPiece) -> Array[Vector2i]:
 					moves.append(move)
 	return moves
 func piece_clicked(piece: ChessPiece):
-	active_piece = piece
-	display_available_moves(piece)
+	if piece.color == turn_owner:
+		active_piece = piece
+		display_available_moves(piece)
 func clear_move_markers():
 	for placed_move_marker in move_markers:
 		placed_move_marker.queue_free()
@@ -156,6 +164,16 @@ func get_cell_center(location: Vector2)->Vector3:
 	# TODO: Fix this hack
 	var offset = abs(second_square_marker.position-first_square_marker.position).x
 	return Vector3((7-location.y)*offset,0,(7-location.x)*offset)+first_square_marker.position
+func start_next_turn():
+	if turn_owner == ChessPiece.Side.WHITE:
+		turn_owner = ChessPiece.Side.BLACK
+	else:
+		turn_owner = ChessPiece.Side.WHITE
+	var tween = create_tween()
+	tween.tween_property(board, "rotation_degrees:y", 
+		board.rotation_degrees.y-180, 1.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	
+	#board.rotate_y(deg_to_rad(180))
 ## Displays available moves for the given piece by placing clickable MoveMarker's 
 ## on the chess board.
 func display_available_moves(piece: ChessPiece):
@@ -192,6 +210,8 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	# Cleanup 
 	clear_move_markers()
 	active_piece = null
+	# Start new turn.
+	start_next_turn()
 	return true
 # Setup 
 func _init():
