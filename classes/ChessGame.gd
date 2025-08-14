@@ -111,8 +111,29 @@ func get_available_moves(piece: ChessPiece):
 					distance += 1
 				else:
 					idx += 1
-				
-		
+		ChessPiece.Type.QUEEN:
+			var rook_basis_vectors = [Vector2i(1,0),Vector2i(0,1),Vector2i(1,0)*-1,Vector2i(0,1)*-1]
+			var bishop_basis_vectors = [Vector2i(1,1),Vector2i(1,-1),Vector2i(1,1)*-1,Vector2i(1,-1)*-1]
+			var queen_basis_vectors = bishop_basis_vectors + rook_basis_vectors
+			
+			var distance = 1
+			var idx = 0
+			while len(queen_basis_vectors) > 0:
+				move = piece.location+queen_basis_vectors[idx]*distance
+				if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
+					moves.append(move)
+				else:
+					if is_move_within_board(move) and BOARD(move).color == opponent_side:
+						moves.append(move)
+					queen_basis_vectors.remove_at(idx)
+					idx -= 1
+					
+				if idx+1 >= len(queen_basis_vectors):
+					idx = 0
+					distance += 1
+				else:
+					idx += 1
+	
 	return moves
 func piece_clicked(piece: ChessPiece):
 	active_piece = piece
