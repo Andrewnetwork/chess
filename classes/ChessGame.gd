@@ -19,12 +19,16 @@ const classic_piece_layout = [
 @export_group("Gameplay")
 ## Turn on to rotate the board before starting a turn.
 @export var turn_rotation = true
-@export_group("Visual Components")
+@export_group("Scene Components")
 @export var pieces := {"white": {}, "black": {}}
 @export var first_square_marker: Marker3D
 @export var second_square_marker: Marker3D
 @export var move_marker: PackedScene
 @export var board: Node3D
+@export var sfx_player: AudioStreamPlayer
+
+@export_group("Sound Effects")
+@export var piece_move_sound: AudioStream = preload("res://sound/piece_move.mp3")
 
 var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
@@ -198,6 +202,9 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 		else:
 			push_error("Moving a piece onto a pre-existing piece.")
 			return false
+	# Play sound.
+	sfx_player.stream = piece_move_sound
+	sfx_player.play()
 	# Update logical model of chess board. 
 	chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
 	chess_board[new_location.x][new_location.y] = piece
