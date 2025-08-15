@@ -6,13 +6,13 @@ const FULL_BOARD = 8
 enum {WHITE_STARTING_ROW = 6, BLACK_STARTING_ROW = 1}
 # Directional vectors: North, South, North West, etc. 
 const N=Vector2i(1,0)
-const S=-N
 const E=Vector2i(0,1)
+const S=-N
 const W=-E
-const NE = Vector2i(1,1)
-const SW = -NE
-const NW = Vector2i(1,-1)
-const SE = -NW
+const NE = N+E
+const SW = S+W
+const NW = N+W
+const SE = S+E
 
 var game: ChessGame
 
@@ -46,12 +46,11 @@ const RULES = {
 #=== Overloaded Functions
 func _init(parent_game: ChessGame):
 	game = parent_game
-
 #=== Main Functions
 ## Returns the possible moves for a given chess piece. 
-func get_possible_moves(piece: ChessPiece)->Array[Vector2i]:
-	var moves : Array[Vector2i]
-	if piece == null || !RULES.has(piece.type):
+func get_possible_moves(piece: ChessPiece, king_safety_on := true) -> Moves:
+	var moves := Moves.new()
+	if piece == null:
 		push_error("Unable to apply rule to %s."%[str(piece)])
 	else:
 		var rule = RULES[piece.type] as Dictionary
@@ -71,16 +70,22 @@ func get_possible_moves(piece: ChessPiece)->Array[Vector2i]:
 		if rule.has("take"):
 			for take_move in rule.take:
 				move = piece.location+take_move*flip
-				if is_move_within_board(move) and !is_empty_square(move) and _B(game.chess_board, move).color == opponent_side:
-					moves.append(move)
+				if is_move_within_board(move) and !is_empty_square(move) and _B(move).color == opponent_side:
+					if _B(move).type == ChessPiece.Type.KING:
+						moves.to_king.append(move)
+					else:
+						moves.to_opponent.append(move)
 		# Find possible moves along the movement axes. 
 		while len(movement_axes) > 0:
 			move = piece.location+movement_axes[idx]*distance*flip
 			if is_empty_square(move):
-				moves.append(move)
+				moves.to_empty_square.append(move)
 			else:
-				if is_move_within_board(move) and _B(game.chess_board, move).color == opponent_side and (!rule.has("take") || (rule.has("take") and rule.take.has(movement_axes[idx]))):
-					moves.append(move)
+				if is_move_within_board(move) and _B(move).color == opponent_side and (!rule.has("take") || (rule.has("take") and rule.take.has(movement_axes[idx]))):
+					if _B(move).type == ChessPiece.Type.KING:
+						moves.to_king.append(move)
+					else:
+						moves.to_opponent.append(move)
 				movement_axes.remove_at(idx)
 				idx -= 1
 				
@@ -91,22 +96,33 @@ func get_possible_moves(piece: ChessPiece)->Array[Vector2i]:
 					break
 			else:
 				idx += 1
+		# Prune unsafe moves, where king moves into check. 
+		if king_safety_on and piece.type == ChessPiece.Type.KING:
+			for possible_move in moves.get_all():
+				if !is_square_safe(piece, possible_move):
+					moves.remove(possible_move)
+					moves.unsafe_moves.append(possible_move)
 	return moves
-
+## Returns true if no opposing piece is attacking the given square.
+func is_square_safe(piece: ChessPiece, move: Vector2i):
+	# This is so ridiculous.
+	# Idea: create a dummy piece and place it on the move square. If that 
+	# piece threatens a type of its own, then because of the symmetry, 
+	# it is also threatened by a piece of that type. 
+	# TODO clean up.
+	var dummy_types = ChessPiece.Type.keys()
+	for dummy_type in dummy_types:
+		var dummy = ChessPiece.create_dummy(piece.color, ChessPiece.Type[dummy_type], move)
+		for opp_move in get_possible_moves(dummy, false).to_opponent:
+			if _B(opp_move).type == ChessPiece.Type[dummy_type]:
+				return false
+	return true
+func threatens(defender: ChessPiece, attacker: ChessPiece):
+	return get_possible_moves(attacker).has(defender.location)
 #=== Helpers
 func is_empty_square(move: Vector2i):
-	return is_move_within_board(move) and _B(game.chess_board, move) == EMPTY_SQUARE
-func _apply_filter(basis_vectors: Array, piece:ChessPiece, filter_name: String):
-	var out: Array[Vector2i]
-	var filter := Callable(self, filter_name)
-	for basis_vector in basis_vectors:
-		var filter_res = filter.call(piece, basis_vector)
-		if filter_res != null:
-			out.append(filter_res)
-	return out
-	
-func _B(board: Array[Array], position: Vector2i):
-	return board[position.x][position.y]
-	
+	return is_move_within_board(move) and _B(move) == EMPTY_SQUARE
+func _B(position: Vector2i)->ChessPiece:
+	return game.chess_board[position.x][position.y]
 func is_move_within_board(move: Vector2i)->bool:
 	return move.x >= 0 && move.x <= 7 && move.y >= 0 && move.y <= 7

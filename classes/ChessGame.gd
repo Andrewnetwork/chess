@@ -24,6 +24,7 @@ const classic_piece_layout = [
 @export var first_square_marker: Marker3D
 @export var second_square_marker: Marker3D
 @export var move_marker: PackedScene
+@export var unsafe_move_marker: PackedScene
 ## Reference to the physical model of the chess board. 
 @export var board: Node3D
 @export var sfx_player: AudioStreamPlayer
@@ -37,6 +38,7 @@ var move_markers: Array[StaticBody3D]
 var active_piece: ChessPiece
 var turn_owner := ChessPiece.Side.WHITE
 var rule_engine = RuleEngine.new(self)
+
 
 func piece_clicked(piece: ChessPiece):
 	if piece.color == turn_owner:
@@ -65,8 +67,8 @@ func start_next_turn():
 ## on the chess board.
 func display_available_moves(piece: ChessPiece):
 	clear_move_markers()
-	
-	for move in rule_engine.get_possible_moves(piece):
+	var moves = rule_engine.get_possible_moves(piece)
+	for move in moves.get_all():
 		var marker := move_marker.instantiate() as StaticBody3D
 		marker.position = get_cell_center(move)
 		marker.input_event.connect(
@@ -76,6 +78,14 @@ func display_available_moves(piece: ChessPiece):
 						move_piece(piece, move))
 		board.add_child(marker)
 		move_markers.append(marker)
+		
+	for unsafe_move in moves.unsafe_moves:
+		#TODO: clean up
+		var unsafe_marker := unsafe_move_marker.instantiate() as StaticBody3D
+		unsafe_marker.position = get_cell_center(unsafe_move)
+		board.add_child(unsafe_marker)
+		move_markers.append(unsafe_marker)
+		
 func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var target_square = chess_board[new_location.x][new_location.y]
 	if target_square != EMPTY_SQUARE:
@@ -97,6 +107,9 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var new_pos = get_cell_center(new_location)
 	piece.obj_ref.position.x = new_pos.x
 	piece.obj_ref.position.z = new_pos.z
+	# Check if this move puts the opposing king in check. 
+	if rule_engine.get_possible_moves(piece).is_checking():
+		print("CHECK!")
 	# Cleanup 
 	clear_move_markers()
 	active_piece = null
@@ -162,14 +175,9 @@ func setup_board(piece_layout: Array):
 			if piece_type != null and piece_color != null:
 				chess_board[row][col] = ChessPiece.new(piece_color,piece_type, 
 					Vector2i(row, col), counters[layout_flag], null)
-func CB(letter: String, num: int):
-	return chess_board[letter[0].to_ascii_buffer()[0]-65][num-1]
-func is_move_within_board(move: Vector2i):
-	return move.x >= 0 && move.x <= 7 && move.y >= 0 && move.y <= 7
-func BOARD(location: Vector2i) -> ChessPiece:
-	return chess_board[location.x][location.y]
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
+#=== Overloaded
 func _to_string() -> String:
 	var out_str := ""
 	var flip = true
@@ -188,4 +196,3 @@ func _to_string() -> String:
 		out_str += "\n"
 	out_str += "     0    1    2    3    4    5    6    7 "
 	return out_str
-			

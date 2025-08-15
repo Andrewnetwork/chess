@@ -82,7 +82,6 @@ material = SubResource("StandardMaterial3D_i001w")
 size = Vector3(0.055, 0.055, 0.05)
 
 [node name="MoveMarker" type="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0207771, 0)
 
 [node name="possible_move_ball" type="MeshInstance3D" parent="."]
 transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, 0, 0)

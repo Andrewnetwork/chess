@@ -1,0 +1,111 @@
+[gd_scene load_steps=9 format=3 uid="uid://52lrtp0ym3ym"]
+
+[ext_resource type="ArrayMesh" uid="uid://r113jmlw4fux" path="res://models/sphere.obj" id="1_nnd6f"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ug5jf"]
+albedo_color = Color(0.678975, 0.0251026, 0.20277, 1)
+metallic = 1.0
+emission_enabled = true
+emission = Color(0.686377, 0, 0.159052, 1)
+emission_energy_multiplier = 0.0
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_i001w"]
+points = PackedVector3Array(0.334069, -0.39839, 0.850685, -0.183347, -0.0337976, -0.978619, -0.183462, 0.0275553, -0.979228, -0.979227, 0.0275552, 0.183461, 0.516631, 0.817172, 0.243176, 0.482829, -0.818946, -0.301839, -0.454578, -0.882308, -0.0603825, 0.979228, 0.0275553, -0.183462, -0.485755, 0.816246, 0.303359, -0.12176, 0.727658, -0.670063, -0.304793, 0.0271473, 0.944745, -0.81989, 0.14814, -0.546467, 0.574664, 0.207789, -0.786113, 0.516502, 0.391345, 0.759618, -0.241837, -0.819774, 0.513785, 0.784402, -0.516722, 0.331717, -0.151599, -0.549835, -0.819626, 0.485643, 0.816215, -0.303598, -0.757047, -0.397182, -0.514754, -0.784414, -0.516729, 0.331722, 0.514707, -0.397328, -0.756978, -0.303305, 0.572531, 0.758263, 0.27188, -0.910351, 0.302173, -0.699137, 0.695601, -0.151788, 0.881174, 0.178833, 0.425355, -0.786281, 0.207781, 0.574459, 0.822201, 0.544915, -0.152076, -0.485234, -0.367306, 0.788457, -0.181277, -0.910749, -0.362744, 0.850779, -0.39825, -0.334106, 0.152202, 0.818593, 0.547966, -0.398505, 0.824989, -0.398505)
+
+[sub_resource type="Animation" id="Animation_6rqyv"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("possible_move_ball:surface_material_override/0:emission")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0.686377, 0, 0.159052, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("possible_move_ball:surface_material_override/0:emission_energy_multiplier")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_e88d8"]
+resource_name = "glow"
+length = 2.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("possible_move_ball:surface_material_override/0:emission")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0.692102, 0, 0.0237388, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("possible_move_ball:surface_material_override/0:emission_energy_multiplier")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1, 2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [0.76, 1.88, 0.76]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4m3pi"]
+_data = {
+&"RESET": SubResource("Animation_6rqyv"),
+&"glow": SubResource("Animation_e88d8")
+}
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i001w"]
+albedo_color = Color(0.183333, 1, 0, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_i001w"]
+material = SubResource("StandardMaterial3D_i001w")
+size = Vector3(0.055, 0.055, 0.05)
+
+[node name="MoveMarker" type="StaticBody3D"]
+
+[node name="possible_move_ball" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, 0, 0)
+mesh = ExtResource("1_nnd6f")
+surface_material_override/0 = SubResource("StandardMaterial3D_ug5jf")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, 0.00184812, 0)
+shape = SubResource("ConvexPolygonShape3D_i001w")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_4m3pi")
+}
+autoplay = "glow"
+
+[node name="CPUParticles3D" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0140519, -0.109788, 0.00384559)
+visible = false
+lifetime = 0.62
+speed_scale = 1.01
+randomness = 0.95
+mesh = SubResource("PrismMesh_i001w")
+emission_shape = 1
+emission_sphere_radius = 0.1
+spread = 85.0
+gravity = Vector3(0, 1.07, 0)

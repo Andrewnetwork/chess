@@ -11,7 +11,7 @@ var type: ChessPiece.Type
 var location: Vector2i
 var piece_count_id: int
 var obj_ref: RigidBody3D
-
+	
 func _to_string() -> String:
 	return "<ChessPiece:"+get_color_str()+"_"+get_type_str()+"_"+str(piece_count_id)+">"
 func unicode_icon()->String:
@@ -47,3 +47,5 @@ func get_id()->int:
 func eliminate():
 	obj_ref.queue_free()
 	queue_free()
+static func create_dummy(color: ChessPiece.Side, piece_type: ChessPiece.Type, position: Vector2i):
+	return ChessPiece.new(color, piece_type, position, -1, null)
