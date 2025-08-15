@@ -36,127 +36,8 @@ var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
 var active_piece: ChessPiece
 var turn_owner := ChessPiece.Side.WHITE
+var rule_engine = RuleEngine.new(self)
 
-func get_available_moves(piece: ChessPiece) -> Array[Vector2i]:
-	# Initialize output array and temp move variable.
-	var moves : Array[Vector2i]
-	var move = null
-	# Rule parameters.
-	var flip = -1 if piece.color == ChessPiece.Side.WHITE else 1 
-	var starting_row = WHITE_STARTING_ROW if piece.color == ChessPiece.Side.WHITE else BLACK_STARTING_ROW
-	var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
-	# Move logic.
-	# TODO: this should be condensed. The movement constraints on the pieces should be represented
-	# at a higher level.
-	match piece.type:
-		ChessPiece.Type.PAWN: 
-			# One forward.
-			move = piece.location+Vector2i(1,0)*flip
-			if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
-				moves.append(move)
-				# Two forward, from starting row.
-				move = piece.location+Vector2i(2,0)*flip
-				if is_move_within_board(move) and piece.location.x == starting_row and BOARD(move) == EMPTY_SQUARE:
-					moves.append(move)
-			# Left diagonal.
-			move = piece.location+Vector2i(1,1)*flip
-			if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
-				moves.append(move)
-			# Right diagonal.
-			move = piece.location+Vector2i(1,-1)*flip
-			if is_move_within_board(move) and BOARD(move) != EMPTY_SQUARE and BOARD(move).color == opponent_side:
-				moves.append(move)
-		ChessPiece.Type.ROOK:
-			var basis_vectors = [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1), Vector2i(0,-1)]
-			var locations = []
-			locations.resize(4)
-			locations.fill(piece.location)
-		
-			var idx = 0
-			while len(basis_vectors) > 0:
-				locations[idx] += basis_vectors[idx]
-				if is_move_within_board(locations[idx]):
-					if BOARD(locations[idx]) == EMPTY_SQUARE:
-						moves.append(locations[idx])
-					elif BOARD(locations[idx]).color == opponent_side:
-						moves.append(locations[idx])
-						# Done searching in this direction.
-						basis_vectors.remove_at(idx)
-						locations.remove_at(idx)
-						# Removing an element shrinks the array, push the index back by one. 
-						idx -= 1
-					else:
-						# Hit a friendly piece. 
-						basis_vectors.remove_at(idx)
-						locations.remove_at(idx)
-						# Removing an element shrinks the array, push the index back by one. 
-						idx -= 1
-				else:
-					# Out of bounds.
-					basis_vectors.remove_at(idx)
-					locations.remove_at(idx)
-				if idx+1 >= len(basis_vectors):
-					# Loop around until all baisis vectors have led to dead ends.
-					idx = 0
-				else:
-					idx += 1
-		ChessPiece.Type.KNIGHT:
-			var knight_basis_vectors = [Vector2i(2,1), Vector2i(2,-1), Vector2i(1,2), Vector2i(1,-2)]
-			knight_basis_vectors.append_array(knight_basis_vectors.map(func(basis_vector): return basis_vector*-1))
-			for knight_basis_vector in knight_basis_vectors:
-				move = piece.location+knight_basis_vector
-				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
-					moves.append(move)
-		ChessPiece.Type.BISHOP:
-			var bishop_basis_vectors = [Vector2i(1,1),Vector2i(1,-1)]
-			bishop_basis_vectors.append_array(bishop_basis_vectors.map(func(basis_vector): return basis_vector*-1))
-			var distance = 1
-			var idx = 0
-			while len(bishop_basis_vectors) > 0:
-				move = piece.location+bishop_basis_vectors[idx]*distance
-				if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
-					moves.append(move)
-				else:
-					if is_move_within_board(move) and BOARD(move).color == opponent_side:
-						moves.append(move)
-					bishop_basis_vectors.remove_at(idx)
-					idx -= 1
-					
-				if idx+1 >= len(bishop_basis_vectors):
-					idx = 0
-					distance += 1
-				else:
-					idx += 1
-		ChessPiece.Type.QUEEN:
-			var rook_basis_vectors = [Vector2i(1,0),Vector2i(0,1),Vector2i(1,0)*-1,Vector2i(0,1)*-1]
-			var bishop_basis_vectors = [Vector2i(1,1),Vector2i(1,-1),Vector2i(1,1)*-1,Vector2i(1,-1)*-1]
-			var queen_basis_vectors = bishop_basis_vectors + rook_basis_vectors
-			
-			var distance = 1
-			var idx = 0
-			while len(queen_basis_vectors) > 0:
-				move = piece.location+queen_basis_vectors[idx]*distance
-				if is_move_within_board(move) and BOARD(move) == EMPTY_SQUARE:
-					moves.append(move)
-				else:
-					if is_move_within_board(move) and BOARD(move).color == opponent_side:
-						moves.append(move)
-					queen_basis_vectors.remove_at(idx)
-					idx -= 1
-					
-				if idx+1 >= len(queen_basis_vectors):
-					idx = 0
-					distance += 1
-				else:
-					idx += 1
-		ChessPiece.Type.KING:
-			var king_basis_vectors = [Vector2i(1,0), Vector2i(0,1),Vector2i(1,-1), Vector2i(1,1)]
-			king_basis_vectors.append_array(king_basis_vectors.map(func(basis_vector): return basis_vector*-1))
-			for king_basis_vector in king_basis_vectors:
-				move = piece.location+king_basis_vector
-				if is_move_within_board(move) and (BOARD(move) == EMPTY_SQUARE || BOARD(move).color == opponent_side):
-					moves.append(move)
-	return moves
 func piece_clicked(piece: ChessPiece):
 	if piece.color == turn_owner:
 		active_piece = piece
@@ -185,7 +66,7 @@ func start_next_turn():
 func display_available_moves(piece: ChessPiece):
 	clear_move_markers()
 	
-	for move in get_available_moves(piece):
+	for move in rule_engine.get_possible_moves(piece):
 		var marker := move_marker.instantiate() as StaticBody3D
 		marker.position = get_cell_center(move)
 		marker.input_event.connect(
@@ -224,7 +105,7 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	return true
 # Setup 
 func _init():
-	_init_board(classic_piece_layout)
+	setup_board(classic_piece_layout)
 func _ready():
 	_establish_physical_connection()
 ## Establishes a connection between the logical model of chess and its physical representation
@@ -239,8 +120,9 @@ func _establish_physical_connection():
 						if event is InputEventMouseButton:
 							if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 								piece_clicked(cell))
-func _init_board(piece_layout: Array):
+func setup_board(piece_layout: Array):
 	# Initialize chess board.
+	chess_board.clear()
 	for col in range(8):
 		var row = []
 		row.resize(8)
@@ -288,3 +170,22 @@ func BOARD(location: Vector2i) -> ChessPiece:
 	return chess_board[location.x][location.y]
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
+func _to_string() -> String:
+	var out_str := ""
+	var flip = true
+	var row_cntr = 0
+	for row in chess_board:
+		out_str += "%s: "%[row_cntr]
+		for col in row:
+			if col == null:
+				out_str += "  □  " if flip else "  ■  "
+			else: 
+				out_str += "  %s "%[col.unicode_icon()]
+			flip = !flip
+		
+		row_cntr += 1
+		flip = !flip
+		out_str += "\n"
+	out_str += "     0    1    2    3    4    5    6    7 "
+	return out_str
+			

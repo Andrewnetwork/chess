@@ -7,12 +7,32 @@ enum Type {ROOK, KNIGHT, BISHOP, QUEEN, KING, PAWN}
 const type_str = ["rook","knight","bishop","queen","king","pawn"]
 
 var color: ChessPiece.Side
-var type: Type
+var type: ChessPiece.Type
 var location: Vector2i
 var piece_count_id: int
 var obj_ref: RigidBody3D
 
-func _init(piece_color: ChessPiece.Side, piece_type: Type, piece_location: Vector2i, id: int, piece_obj_ref: RigidBody3D):
+func _to_string() -> String:
+	return "<ChessPiece:"+get_color_str()+"_"+get_type_str()+"_"+str(piece_count_id)+">"
+func unicode_icon()->String:
+	if color == ChessPiece.Side.WHITE:
+		match type:
+			ChessPiece.Type.ROOK: return "♖"
+			ChessPiece.Type.KNIGHT: return "♘"
+			ChessPiece.Type.BISHOP: return "♗"
+			ChessPiece.Type.QUEEN: return "♕"
+			ChessPiece.Type.KING: return "♔"
+			ChessPiece.Type.PAWN: return "♙"
+	else:
+		match type:
+			ChessPiece.Type.ROOK: return "♜"
+			ChessPiece.Type.KNIGHT: return "♞"
+			ChessPiece.Type.BISHOP: return "♝"
+			ChessPiece.Type.QUEEN: return "♛"
+			ChessPiece.Type.KING: return "♚"
+			ChessPiece.Type.PAWN: return "♟"
+	return ""
+func _init(piece_color: ChessPiece.Side, piece_type: ChessPiece.Type, piece_location: Vector2i, id: int, piece_obj_ref: RigidBody3D):
 	color = piece_color
 	type = piece_type
 	location = piece_location
