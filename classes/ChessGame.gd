@@ -38,6 +38,8 @@ const classic_piece_layout = [
 ## Matrix representing the logical model of the chess board. 
 var chess_board: Array[Array]
 var move_markers: Array[StaticBody3D]
+var check_adornment : StaticBody3D
+var is_in_check := false
 var active_piece: ChessPiece
 var turn_owner := ChessPiece.Side.WHITE
 var rule_engine = RuleEngine.new(self)
@@ -84,15 +86,20 @@ func display_available_moves(piece: ChessPiece):
 		
 	for unsafe_move in moves.unsafe_moves:
 		#TODO: clean up
-		var unsafe_marker := move_marker.instantiate() as StaticBody3D
+		var unsafe_marker := unsafe_move_marker.instantiate() as StaticBody3D
 		unsafe_marker.position = get_cell_center(unsafe_move)
 		board.add_child(unsafe_marker)
 		move_markers.append(unsafe_marker)
+func clear_check_display():
+	if check_adornment != null:
+		board.remove_child(check_adornment)
+		check_adornment.queue_free()
 func display_check(checking_piece_location):
 	animation_player.play("check")
 	var marker := checking_adornment.instantiate() as StaticBody3D
 	marker.position = get_cell_center(checking_piece_location)
 	board.add_child(marker)
+	check_adornment = marker
 func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var target_square = chess_board[new_location.x][new_location.y]
 	if target_square != EMPTY_SQUARE:
@@ -114,8 +121,13 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var new_pos = get_cell_center(new_location)
 	piece.obj_ref.position.x = new_pos.x
 	piece.obj_ref.position.z = new_pos.z
-	# Check if this move puts the opposing king in check. 
+	# Check if this move puts the opposing king in check.
+	if is_in_check:
+		#Moved out of check.
+		is_in_check = false
+		clear_check_display()
 	if rule_engine.get_possible_moves(piece).is_checking():
+		is_in_check = true
 		display_check(new_location)
 	# Cleanup 
 	clear_move_markers()
