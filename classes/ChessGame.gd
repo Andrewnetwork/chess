@@ -37,11 +37,13 @@ const classic_piece_layout = [
 
 ## Matrix representing the logical model of the chess board. 
 var chess_board: Array[Array]
+var is_in_check := false
+var checking_piece: ChessPiece
+var turn_owner := ChessPiece.Side.WHITE
+var active_piece: ChessPiece
+
 var move_markers: Array[StaticBody3D]
 var check_adornment : StaticBody3D
-var is_in_check := false
-var active_piece: ChessPiece
-var turn_owner := ChessPiece.Side.WHITE
 var rule_engine = RuleEngine.new(self)
 
 
@@ -128,6 +130,7 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 		clear_check_display()
 	if rule_engine.get_possible_moves(piece).is_checking():
 		is_in_check = true
+		checking_piece = piece
 		display_check(new_location)
 	# Cleanup 
 	clear_move_markers()

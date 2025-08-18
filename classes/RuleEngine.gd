@@ -102,7 +102,28 @@ func get_possible_moves(piece: ChessPiece, king_safety_on := true) -> Moves:
 				if !is_square_safe(piece, possible_move):
 					moves.remove(possible_move)
 					moves.unsafe_moves.append(possible_move)
+		# Prune moves if king is in check and the move does not remove the king from check. 
+		if king_safety_on and game.is_in_check:
+			for possible_move in moves.get_all():
+				if !move_breaks_check(piece, possible_move):
+					moves.remove(possible_move)
+					moves.unsafe_moves.append(possible_move)
+			
 	return moves
+	
+func move_breaks_check(piece: ChessPiece, move: Vector2i):
+	if move == game.checking_piece.location:
+		return true
+	else:
+		# Simulate move. 
+		var swap = game.chess_board[move.x][move.y]
+		game.chess_board[move.x][move.y] = piece
+		game.chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
+		var res = !get_possible_moves(game.checking_piece, false).is_checking()
+		# Restore pieces as they were before the simulated move. 
+		game.chess_board[move.x][move.y] = swap	
+		game.chess_board[piece.location.x][piece.location.y] = piece
+		return res
 ## Returns true if no opposing piece is attacking the given square.
 func is_square_safe(piece: ChessPiece, move: Vector2i):
 	# This is so ridiculous.
