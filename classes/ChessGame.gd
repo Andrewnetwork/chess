@@ -42,6 +42,8 @@ var is_in_check := false
 var checking_piece: ChessPiece
 var turn_owner := ChessPiece.Side.WHITE
 var active_piece: ChessPiece
+var white_king: ChessPiece
+var black_king: ChessPiece
 
 var move_markers: Array[StaticBody3D]
 var check_adornment : StaticBody3D
@@ -102,6 +104,18 @@ func check_mate():
 		white_king_camera.current = true
 	else:
 		black_king_camera.current = true
+func threat_to_opposing_king() -> ChessPiece:
+	var res: Array[ChessPiece]
+	match turn_owner:
+		ChessPiece.Side.BLACK: res = rule_engine.get_threats(white_king)
+		ChessPiece.Side.WHITE: res = rule_engine.get_threats(black_king)
+	if len(res) == 1:
+		return res[0]
+	elif len(res) == 0:
+		return null
+	else:
+		push_error("Returning more than one threat to king!")
+		return null
 func display_check(checking_piece_location):
 	animation_player.play("check")
 	var marker := checking_adornment.instantiate() as StaticBody3D
@@ -135,18 +149,18 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 		is_in_check = false
 		checking_piece = null
 		clear_check_display()
-	if rule_engine.get_possible_moves(piece).is_checking():
-		# TODO, WARNING: this does not cover the revealed check case. We should check if the king 
-		# is safe and then identify the checking piece. 
+		
+	var threat_to_king := threat_to_opposing_king()
+	if threat_to_king:
 		is_in_check = true
-		checking_piece = piece
+		checking_piece = threat_to_king
 		if rule_engine.is_check_mate():
 			check_mate()
 			clear_move_markers()
 			active_piece = null
 			return true
 		else:
-			display_check(new_location)
+			display_check(threat_to_king.location)
 	# Cleanup 
 	clear_move_markers()
 	active_piece = null
@@ -212,6 +226,10 @@ func setup_board(piece_layout: Array):
 			if piece_type != null and piece_color != null:
 				chess_board[row][col] = ChessPiece.new(piece_color,piece_type, 
 					Vector2i(row, col), counters[layout_flag], null)
+				if piece_type == ChessPiece.Type.KING:
+					match piece_color:
+						ChessPiece.Side.WHITE: white_king = chess_board[row][col]
+						ChessPiece.Side.BLACK: black_king = chess_board[row][col]
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
 #=== Overloaded

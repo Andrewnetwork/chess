@@ -141,11 +141,15 @@ func move_breaks_check(piece: ChessPiece, move: Vector2i):
 		game.chess_board[piece.location.x][piece.location.y] = piece
 		return res
 ## Returns true if no opposing piece is attacking the given square.
-func is_square_safe(piece: ChessPiece, move: Vector2i):
+func is_square_safe(piece: ChessPiece, move: Vector2i)->bool:
+	return len(get_threats(piece, move)) == 0
+## Gets an array of all the pieces threatening a square. 
+func get_threats(piece: ChessPiece, move: Vector2i = piece.location) -> Array[ChessPiece]:
 	# Create a dummy piece and place it on the move square. If that 
 	# piece threatens a type of its own, then because of the symmetry, 
 	# it is also threatened by a piece of that type. We use these dummy pieces 
 	# as a threat probe. 
+	var threats: Array[ChessPiece]
 	var piece_types = ChessPiece.Type.keys()
 	# Process king seperately so as to avoid infinite recursion. 
 	piece_types.erase("KING")
@@ -153,14 +157,15 @@ func is_square_safe(piece: ChessPiece, move: Vector2i):
 		var dummy = ChessPiece.create_dummy(piece.color, ChessPiece.Type[type], move)
 		for opp_move in get_possible_moves(dummy, false).to_opponent:
 			if _B(opp_move).type == ChessPiece.Type[type]:
-				return false
+				threats.append(_B(opp_move))
 	# Check if the square is not in a king's zone of control.
 	var opp_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
-	for pieces in get_pieces_within_range(move, Vector2i(1,1), opp_side):
-		if pieces.type == ChessPiece.Type.KING:
-			return false
+	for piece_within_1 in get_pieces_within_range(move, Vector2i(1,1), opp_side):
+		if piece.type == ChessPiece.Type.KING:
+			threats.append(piece_within_1)
+			break
 			
-	return true
+	return threats
 func threatens(defender: ChessPiece, attacker: ChessPiece):
 	return get_possible_moves(attacker, false).has(defender.location)
 #=== Helpers
