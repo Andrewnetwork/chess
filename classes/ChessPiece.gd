@@ -47,5 +47,5 @@ func get_id()->int:
 func eliminate():
 	obj_ref.queue_free()
 	queue_free()
-static func create_dummy(color: ChessPiece.Side, piece_type: ChessPiece.Type, position: Vector2i):
-	return ChessPiece.new(color, piece_type, position, -1, null)
+static func create_dummy(dummy_color: ChessPiece.Side, piece_type: ChessPiece.Type, position: Vector2i):
+	return ChessPiece.new(dummy_color, piece_type, position, -1, null)

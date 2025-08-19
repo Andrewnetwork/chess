@@ -13,8 +13,7 @@ const classic_piece_layout = [
 	[E,  E,  E,  E,  E,  E,  E,  E ], #4
 	[E,  E,  E,  E,  E,  E,  E,  E ], #5
 	[WP, WP, WP, WP, WP, WP, WP, WP], #6
-	[WR, WN, WB, WQ, WK, WB, WN, WR], #7
-]
+	[WR, WN, WB, WQ, WK, WB, WN, WR]] #7
 
 @export_group("Gameplay")
 ## Turn on to rotate the board before starting a turn.
@@ -27,7 +26,7 @@ const classic_piece_layout = [
 @export var checking_adornment: PackedScene
 @export var move_marker: PackedScene
 @export var unsafe_move_marker: PackedScene
-
+#
 ## Reference to the physical model of the chess board. 
 @export var board: Node3D
 @export var sfx_player: AudioStreamPlayer
@@ -96,6 +95,8 @@ func clear_check_display():
 	if check_adornment != null:
 		board.remove_child(check_adornment)
 		check_adornment.queue_free()
+func check_mate():
+	print("Check mate!")
 func display_check(checking_piece_location):
 	animation_player.play("check")
 	var marker := checking_adornment.instantiate() as StaticBody3D
@@ -127,11 +128,18 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	if is_in_check:
 		#Moved out of check.
 		is_in_check = false
+		checking_piece = null
 		clear_check_display()
 	if rule_engine.get_possible_moves(piece).is_checking():
 		is_in_check = true
 		checking_piece = piece
-		display_check(new_location)
+		if rule_engine.is_check_mate():
+			check_mate()
+			clear_move_markers()
+			active_piece = null
+			return true
+		else:
+			display_check(new_location)
 	# Cleanup 
 	clear_move_markers()
 	active_piece = null

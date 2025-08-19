@@ -48,7 +48,7 @@ func _init(parent_game: ChessGame):
 	game = parent_game
 #=== Main Functions
 ## Returns the possible moves for a given chess piece. 
-func get_possible_moves(piece: ChessPiece, king_safety_on := true) -> Moves:
+func get_possible_moves(piece: ChessPiece, second_pass:=true) -> Moves:
 	var moves := Moves.new()
 	if piece == null:
 		push_error("Unable to apply rule to %s."%[str(piece)])
@@ -61,7 +61,7 @@ func get_possible_moves(piece: ChessPiece, king_safety_on := true) -> Moves:
 		var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
 		var flip = -1 if piece.color == ChessPiece.Side.WHITE  else 1
 		
-		# Add moves if certain conditions are met. TODO cleanup.
+		#== First pass: generate possible moves.
 		if rule.has("conditional_moves"):
 			if rule.conditional_moves.has("STARTING_ROW"):
 				if (piece.color == ChessPiece.Side.WHITE && piece.location.x == WHITE_STARTING_ROW) or (piece.color == ChessPiece.Side.BLACK && piece.location.x == BLACK_STARTING_ROW):
@@ -96,20 +96,36 @@ func get_possible_moves(piece: ChessPiece, king_safety_on := true) -> Moves:
 					break
 			else:
 				idx += 1
+		#=== Second pass: prune moves that violate checking rules. 
 		# Prune unsafe moves, where king moves into check. 
-		if king_safety_on and piece.type == ChessPiece.Type.KING:
-			for possible_move in moves.get_all():
-				if !is_square_safe(piece, possible_move):
-					moves.remove(possible_move)
-					moves.unsafe_moves.append(possible_move)
-		# Prune moves if king is in check and the move does not remove the king from check. 
-		if king_safety_on and game.is_in_check:
-			for possible_move in moves.get_all():
-				if !move_breaks_check(piece, possible_move):
-					moves.remove(possible_move)
-					moves.unsafe_moves.append(possible_move)
-			
+		if second_pass:
+			if piece.type == ChessPiece.Type.KING:
+				for possible_move in moves.get_all():
+					if !is_square_safe(piece, possible_move):
+						moves.remove(possible_move)
+						moves.unsafe_moves.append(possible_move)
+			# Prune moves if king is in check and the move does not remove the king from check. 
+			if game.is_in_check:
+				for possible_move in moves.get_all():
+					if !move_breaks_check(piece, possible_move):
+						moves.remove(possible_move)
+						moves.unsafe_moves.append(possible_move)
 	return moves
+		
+## Checks if a game in the state of check is check mate.
+func is_check_mate():
+	# Super lazy. TODO cleanup
+	if game.is_in_check:
+		var checked_side = ChessPiece.Side.BLACK if game.checking_piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE 
+		
+		for row in game.chess_board:
+			for square in row:
+				if square != EMPTY_SQUARE and square.color == checked_side:
+					if len(get_possible_moves(square).get_all()) > 0:
+						return false
+		return true
+	else:
+		return false
 	
 func move_breaks_check(piece: ChessPiece, move: Vector2i):
 	if move == game.checking_piece.location:
@@ -126,21 +142,41 @@ func move_breaks_check(piece: ChessPiece, move: Vector2i):
 		return res
 ## Returns true if no opposing piece is attacking the given square.
 func is_square_safe(piece: ChessPiece, move: Vector2i):
-	# This is so ridiculous.
-	# Idea: create a dummy piece and place it on the move square. If that 
+	# Create a dummy piece and place it on the move square. If that 
 	# piece threatens a type of its own, then because of the symmetry, 
-	# it is also threatened by a piece of that type. 
-	# TODO clean up.
-	var dummy_types = ChessPiece.Type.keys()
-	for dummy_type in dummy_types:
-		var dummy = ChessPiece.create_dummy(piece.color, ChessPiece.Type[dummy_type], move)
+	# it is also threatened by a piece of that type. We use these dummy pieces 
+	# as a threat probe. 
+	var piece_types = ChessPiece.Type.keys()
+	# Process king seperately so as to avoid infinite recursion. 
+	piece_types.erase("KING")
+	for type in piece_types:
+		var dummy = ChessPiece.create_dummy(piece.color, ChessPiece.Type[type], move)
 		for opp_move in get_possible_moves(dummy, false).to_opponent:
-			if _B(opp_move).type == ChessPiece.Type[dummy_type]:
+			if _B(opp_move).type == ChessPiece.Type[type]:
 				return false
+	# Check if the square is not in a king's zone of control.
+	var opp_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
+	for pieces in get_pieces_within_range(move, Vector2i(1,1), opp_side):
+		if pieces.type == ChessPiece.Type.KING:
+			return false
+			
 	return true
 func threatens(defender: ChessPiece, attacker: ChessPiece):
-	return get_possible_moves(attacker).has(defender.location)
+	return get_possible_moves(attacker, false).has(defender.location)
 #=== Helpers
+func get_pieces_within_range(location: Vector2i, loc_range: Vector2i, side = null) -> Array[ChessPiece]:
+	var pieces_within_range : Array[ChessPiece]
+	for row in range(location.x-loc_range.x, location.x+loc_range.x+1):
+		for col in range(location.y-loc_range.y, location.y+loc_range.y+1):
+			var loc = Vector2i(row,col)
+			if is_move_within_board(loc) and _B(loc) != EMPTY_SQUARE:
+				if side != null:
+					if _B(loc).color == side:
+						pieces_within_range.append(_B(loc))
+				else:
+					pieces_within_range.append(loc)
+	return pieces_within_range
+	
 func is_empty_square(move: Vector2i):
 	return is_move_within_board(move) and _B(move) == EMPTY_SQUARE
 func _B(position: Vector2i)->ChessPiece:

@@ -13,11 +13,11 @@ const test_layout = [
 	[E,  E,  E,  E,  E,  E,  E,  E ], #7
    # 0   1   2   3   4   5   6   7
 ]
-
 func _run():
 	initilization_test()
 	custom_layout_test()
 
+	
 func custom_layout_test():
 	var chess_game = ChessGame.new()
 	chess_game.setup_board(test_layout)
