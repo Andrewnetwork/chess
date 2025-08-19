@@ -11,15 +11,15 @@ var BLANK_BOARD = [
 	[E,  E,  E,  E,  E,  E,  E,  E ], #4
 	[E,  E,  E,  E,  E,  E,  E,  E ], #5
 	[E,  E,  E,  E,  E,  E,  E,  E ], #6
-	[E,  E,  E,  E,  E,  E,  E,  E ], #7
+	[E,  E,  E,  E,  E,  E,  E,  E ]] #7
    # 0   1   2   3   4   5   6   7
-]
 
 func _run():
-	#king_rule_test_1()
-	#check_test_1()
+	move_secures_king_test()
+	get_threats_test()
+	king_movement_test()
+	is_square_safe_test()
 	king_on_king_test()
-	pass
 
 ## Ensures that kings cannot enter eachother's zone of control.s
 func king_on_king_test():
@@ -39,8 +39,46 @@ func king_on_king_test():
 	var possible_moves := rule_engine.get_possible_moves(chess_game.chess_board[5][4]).get_all()
 	assert(!possible_moves.has(Vector2i(4,4)), "King can move in another king's zone of control!")
 	print("✅Passed king on king test.")
+
+func move_secures_king_test():
+	var layout = [
+	[E,  E,  E,  E,  BK,  E,  E,  E ], #0
+	[E,  E,  E,  E,  BQ,  E,  E,  E ], #1
+	[E,  E,  E,  E,  E,  E,  E,  E ], #2 
+	[E,  E,  E,  E,  E,  E,  E,  E ], #3 
+	[E,  E,  E,  E,  E,  E,  E,  E ], #4
+	[E,  E,  E,  E,  E,  E,  E,  E ], #5
+	[E,  E,  E,  E,  E,  E,  E,  E ], #6
+	[E,  E,  E,  E,  WK, WB, E,  E ]] #7
+   # 0   1   2   3   4   5   6   7
+	var chess_game = ChessGame.new()
+	chess_game.setup_board(layout)
+	var rule_engine = RuleEngine.new(chess_game)
+	assert(rule_engine.move_secures_king(rule_engine._B(Vector2i(7,5)), Vector2i(6,4)), 
+		"Failed breaks check test. The bishop broke the check, but the function returned false.")
+	assert(!rule_engine.move_secures_king(rule_engine._B(Vector2i(7,5)), Vector2i(6,6)), 
+		"Failed breaks check test. The bishop didn't break the check, but the function returned true.")
+	assert(rule_engine.move_secures_king(rule_engine._B(Vector2i(7,4)), Vector2i(7,3)), 
+		"Failed breaks check test. Moving the king out of the queens line of attack broke the check but the function returned false")
+	print("✅Passed breaks check test.")
 	
-func check_test_1():
+func get_threats_test():
+	const layout = [
+	[E,  E,  E,  E,  E,  E,  E,  E ], #0
+	[E,  E,  E,  E,  E,  E,  E,  E ], #1
+	[E,  E,  E,  E,  E,  E,  E,  E ], #2 
+	[E,  E,  E,  E,  BK, WQ, E,  E ], #3 
+	[E,  E,  E, WP,  WP, E,  E,  E ], #4
+	[E,  E,  E,  E,  WK, E,  WB,  E ], #5
+	[E,  E,  E,  E,  E,  E,  E,  E ], #6
+	[E,  E,  E,  E,  E,  E,  E,  E ]] #7
+	# 0   1   2   3   4   5   6   7 
+	var chess_game = ChessGame.new()
+	chess_game.setup_board(layout)
+	var rule_engine = RuleEngine.new(chess_game)
+	assert(len(rule_engine.get_threats(chess_game.black_king))==3, "Failed get threats test.")
+	print("✅Passed get threats test.")
+func is_square_safe_test():
 	const check_layout = [
 	[E,  E,  E,  E,  E,  E,  E,  BK ], #0
 	[E,  E,  E,  E,  E,  E,  E,  E ],  #1
@@ -57,25 +95,9 @@ func check_test_1():
 	assert(!rule_engine.is_square_safe(chess_game.chess_board[7][7],Vector2i(6,7)), "Failed check test.")
 	assert(rule_engine.is_square_safe(chess_game.chess_board[7][7],Vector2i(7,6)), "Failed check test.")
 	assert(!rule_engine.is_square_safe(chess_game.chess_board[7][7],Vector2i(6,6)), "Failed check test.")
-	print("✅Passed check test 1.")
+	print("✅Passed is square safe test.")
 	
-func king_rule_tests():
-	var chess_game = ChessGame.new()
-	var king_test_board = BLANK_BOARD.duplicate()
-	king_test_board[7][4] = WK
-	var row = []
-	row.resize(8)
-	row.fill(WP)
-	king_test_board[6] = row
-	king_test_board[7][3] = WP
-	king_test_board[7][5] = BB
-	chess_game.setup_board(king_test_board)
-	var rule_engine = RuleEngine.new(chess_game)
-	var moves = rule_engine.get_possible_moves(chess_game.chess_board[7][4])
-	print(chess_game)
-	print(moves)
-	
-func king_rule_test_1():
+func king_movement_test():
 	var chess_game = ChessGame.new()
 	var king_test_board = BLANK_BOARD.duplicate()
 	king_test_board[7][4] = WK
@@ -90,5 +112,5 @@ func king_rule_test_1():
 	chess_game.setup_board(king_test_board)
 	var rule_engine = RuleEngine.new(chess_game)
 	var moves = rule_engine.get_possible_moves(chess_game.chess_board[7][4])
-	print(chess_game)
-	print(moves.get_all())
+	assert(moves.get_all()==[Vector2i(6,4)], "Failed king movement test.")
+	print("✅Passed king movement test.")

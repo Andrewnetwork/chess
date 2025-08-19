@@ -97,26 +97,27 @@ func get_possible_moves(piece: ChessPiece, second_pass:=true) -> Moves:
 			else:
 				idx += 1
 		#=== Second pass: prune moves that violate checking rules. 
-		# Prune unsafe moves, where king moves into check. 
+		
 		if second_pass:
-			if piece.type == ChessPiece.Type.KING:
-				for possible_move in moves.get_all():
-					if !is_square_safe(piece, possible_move):
-						moves.remove(possible_move)
-						moves.unsafe_moves.append(possible_move)
+			## Prune unsafe moves, where king moves into check. 
+			#if piece.type == ChessPiece.Type.KING:
+				#for possible_move in moves.get_all():
+					#if !is_square_safe(piece, possible_move):
+						#moves.remove(possible_move)
+						#moves.unsafe_moves.append(possible_move)
+						
 			# Prune moves if king is in check and the move does not remove the king from check. 
-			if game.is_in_check:
-				for possible_move in moves.get_all():
-					if !move_breaks_check(piece, possible_move):
-						moves.remove(possible_move)
-						moves.unsafe_moves.append(possible_move)
+			for possible_move in moves.get_all():
+				if !move_secures_king(piece, possible_move):
+					moves.remove(possible_move)
+					moves.unsafe_moves.append(possible_move)
 	return moves
 		
 ## Checks if a game in the state of check is check mate.
 func is_check_mate():
 	# Super lazy. TODO cleanup
 	if game.is_in_check:
-		var checked_side = ChessPiece.Side.BLACK if game.checking_piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE 
+		var checked_side = ChessPiece.Side.BLACK if game.turn_owner == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE 
 		
 		for row in game.chess_board:
 			for square in row:
@@ -127,19 +128,22 @@ func is_check_mate():
 	else:
 		return false
 	
-func move_breaks_check(piece: ChessPiece, move: Vector2i):
-	if move == game.checking_piece.location:
-		return true
-	else:
-		# Simulate move. 
-		var swap = game.chess_board[move.x][move.y]
-		game.chess_board[move.x][move.y] = piece
-		game.chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
-		var res = !get_possible_moves(game.checking_piece, false).is_checking()
-		# Restore pieces as they were before the simulated move. 
-		game.chess_board[move.x][move.y] = swap	
-		game.chess_board[piece.location.x][piece.location.y] = piece
-		return res
+func move_secures_king(piece: ChessPiece, move: Vector2i):
+	# Simulate move. 
+	var swap = game.chess_board[move.x][move.y]
+	var original_location = piece.location
+	game.chess_board[move.x][move.y] = piece
+	game.chess_board[piece.location.x][piece.location.y] = EMPTY_SQUARE
+	piece.location = move
+	#TODO when assigning to a chess_board cell, the piece location should also be automatically changed.
+	var opponent_color = ChessPiece.Side.WHITE if piece.color == ChessPiece.Side.BLACK else ChessPiece.Side.BLACK
+	var side_king = game.black_king if opponent_color == ChessPiece.Side.WHITE else game.white_king
+	var res = len(get_threats(side_king))==0
+	# Restore pieces as they were before the simulated move. 
+	piece.location = original_location
+	game.chess_board[move.x][move.y] = swap	
+	game.chess_board[piece.location.x][piece.location.y] = piece
+	return res
 ## Returns true if no opposing piece is attacking the given square.
 func is_square_safe(piece: ChessPiece, move: Vector2i)->bool:
 	return len(get_threats(piece, move)) == 0
@@ -151,20 +155,12 @@ func get_threats(piece: ChessPiece, move: Vector2i = piece.location) -> Array[Ch
 	# as a threat probe. 
 	var threats: Array[ChessPiece]
 	var piece_types = ChessPiece.Type.keys()
-	# Process king seperately so as to avoid infinite recursion. 
-	piece_types.erase("KING")
+
 	for type in piece_types:
 		var dummy = ChessPiece.create_dummy(piece.color, ChessPiece.Type[type], move)
-		for opp_move in get_possible_moves(dummy, false).to_opponent:
+		for opp_move in get_possible_moves(dummy, false).to_opponent_piece():
 			if _B(opp_move).type == ChessPiece.Type[type]:
 				threats.append(_B(opp_move))
-	# Check if the square is not in a king's zone of control.
-	var opp_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
-	for piece_within_1 in get_pieces_within_range(move, Vector2i(1,1), opp_side):
-		if piece.type == ChessPiece.Type.KING:
-			threats.append(piece_within_1)
-			break
-			
 	return threats
 func threatens(defender: ChessPiece, attacker: ChessPiece):
 	return get_possible_moves(attacker, false).has(defender.location)

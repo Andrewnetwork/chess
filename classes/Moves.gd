@@ -6,7 +6,9 @@ var to_opponent: Array[Vector2i]
 var to_king: Array[Vector2i]
 ## Moves that put the king in or leave the king in check. 
 var unsafe_moves: Array[Vector2i]
-	
+
+func to_opponent_piece() -> Array[Vector2i]:
+	return to_opponent + to_king
 func get_all() -> Array[Vector2i]:
 	return to_empty_square+to_opponent+to_king
 # Returns true if there is a move that puts the to_king in check. 

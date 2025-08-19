@@ -39,14 +39,13 @@ const classic_piece_layout = [
 ## Matrix representing the logical model of the chess board. 
 var chess_board: Array[Array]
 var is_in_check := false
-var checking_piece: ChessPiece
 var turn_owner := ChessPiece.Side.WHITE
 var active_piece: ChessPiece
 var white_king: ChessPiece
 var black_king: ChessPiece
 
 var move_markers: Array[StaticBody3D]
-var check_adornment : StaticBody3D
+var check_adornments : Array[StaticBody3D]
 var rule_engine = RuleEngine.new(self)
 
 
@@ -96,32 +95,26 @@ func display_available_moves(piece: ChessPiece):
 		board.add_child(unsafe_marker)
 		move_markers.append(unsafe_marker)
 func clear_check_display():
-	if check_adornment != null:
+	for check_adornment in check_adornments:
 		board.remove_child(check_adornment)
 		check_adornment.queue_free()
+	check_adornments.clear()
 func check_mate():
 	if turn_owner == ChessPiece.Side.WHITE:
 		white_king_camera.current = true
 	else:
 		black_king_camera.current = true
-func threat_to_opposing_king() -> ChessPiece:
+func threats_to_opposing_king() -> Array[ChessPiece]:
 	var res: Array[ChessPiece]
 	match turn_owner:
-		ChessPiece.Side.BLACK: res = rule_engine.get_threats(white_king)
-		ChessPiece.Side.WHITE: res = rule_engine.get_threats(black_king)
-	if len(res) == 1:
-		return res[0]
-	elif len(res) == 0:
-		return null
-	else:
-		push_error("Returning more than one threat to king!")
-		return null
-func display_check(checking_piece_location):
-	animation_player.play("check")
-	var marker := checking_adornment.instantiate() as StaticBody3D
-	marker.position = get_cell_center(checking_piece_location)
-	board.add_child(marker)
-	check_adornment = marker
+		ChessPiece.Side.BLACK: return rule_engine.get_threats(white_king)
+		ChessPiece.Side.WHITE: return rule_engine.get_threats(black_king)
+	return res
+func adorn_checking_pieces(checking_piece_location):
+	var adornment := checking_adornment.instantiate() as StaticBody3D
+	adornment.position = get_cell_center(checking_piece_location)
+	board.add_child(adornment)
+	check_adornments.append(adornment)
 func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var target_square = chess_board[new_location.x][new_location.y]
 	if target_square != EMPTY_SQUARE:
@@ -147,20 +140,20 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	if is_in_check:
 		#Moved out of check.
 		is_in_check = false
-		checking_piece = null
 		clear_check_display()
 		
-	var threat_to_king := threat_to_opposing_king()
-	if threat_to_king:
+	var threats_to_king := threats_to_opposing_king()
+	if len(threats_to_king) > 0:
 		is_in_check = true
-		checking_piece = threat_to_king
 		if rule_engine.is_check_mate():
 			check_mate()
 			clear_move_markers()
 			active_piece = null
 			return true
 		else:
-			display_check(threat_to_king.location)
+			animation_player.play("check")
+			for threat in threats_to_king:
+				adorn_checking_pieces(threat.location)
 	# Cleanup 
 	clear_move_markers()
 	active_piece = null
