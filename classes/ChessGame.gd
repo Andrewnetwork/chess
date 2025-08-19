@@ -51,30 +51,7 @@ var move_markers: Array[StaticBody3D]
 var check_adornments : Array[StaticBody3D]
 var rule_engine = RuleEngine.new(self)
 
-
-func piece_clicked(piece: ChessPiece):
-	if piece.color == turn_owner:
-		active_piece = piece
-		display_available_moves(piece)
-func clear_move_markers():
-	for placed_move_marker in move_markers:
-		placed_move_marker.queue_free()
-	move_markers.clear()
-## Gets the phyiscal location of the chess piece on the 3D board. 
-func get_cell_center(location: Vector2)->Vector3:
-	# TODO: Fix this hack
-	var offset = abs(second_square_marker.position-first_square_marker.position).x
-	return Vector3((7-location.y)*offset,0,(7-location.x)*offset)+first_square_marker.position
-func start_next_turn():
-	if turn_owner == ChessPiece.Side.WHITE:
-		turn_owner = ChessPiece.Side.BLACK
-	else:
-		turn_owner = ChessPiece.Side.WHITE
-	var tween = create_tween()
-	tween.tween_property(board, "rotation_degrees:y", 
-		board.rotation_degrees.y-180, 2 ).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	
-	#board.rotate_y(deg_to_rad(180))
+#=== UI
 ## Displays available moves for the given piece by placing clickable MoveMarker's 
 ## on the chess board.
 func display_available_moves(piece: ChessPiece):
@@ -102,24 +79,16 @@ func clear_check_display():
 		board.remove_child(check_adornment)
 		check_adornment.queue_free()
 	check_adornments.clear()
-func check_mate():
-	if turn_owner == ChessPiece.Side.WHITE:
-		white_king_camera.current = true
-		white_win_screen.visible = true
-	else:
-		black_king_camera.current = true
-		black_win_screen.visible = true
-func threats_to_opposing_king() -> Array[ChessPiece]:
-	var res: Array[ChessPiece]
-	match turn_owner:
-		ChessPiece.Side.BLACK: return rule_engine.get_threats(white_king)
-		ChessPiece.Side.WHITE: return rule_engine.get_threats(black_king)
-	return res
+func clear_move_markers():
+	for placed_move_marker in move_markers:
+		placed_move_marker.queue_free()
+	move_markers.clear()
 func adorn_checking_pieces(checking_piece_location):
 	var adornment := checking_adornment.instantiate() as StaticBody3D
 	adornment.position = get_cell_center(checking_piece_location)
 	board.add_child(adornment)
 	check_adornments.append(adornment)
+#=== Game loop
 func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var target_square = chess_board[new_location.x][new_location.y]
 	if target_square != EMPTY_SQUARE:
@@ -165,7 +134,27 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	# Start new turn.
 	start_next_turn()
 	return true
-# Setup 
+func start_next_turn():
+	if turn_owner == ChessPiece.Side.WHITE:
+		turn_owner = ChessPiece.Side.BLACK
+	else:
+		turn_owner = ChessPiece.Side.WHITE
+	var tween = create_tween()
+	tween.tween_property(board, "rotation_degrees:y", 
+		board.rotation_degrees.y-180, 2 ).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+func check_mate():
+	if turn_owner == ChessPiece.Side.WHITE:
+		white_king_camera.current = true
+		white_win_screen.visible = true
+	else:
+		black_king_camera.current = true
+		black_win_screen.visible = true
+#=== Event handling
+func piece_clicked(piece: ChessPiece):
+	if piece.color == turn_owner:
+		active_piece = piece
+		display_available_moves(piece)
+#=== Setup 
 func _init():
 	setup_board(classic_piece_layout)
 func _ready():
@@ -230,6 +219,11 @@ func setup_board(piece_layout: Array):
 						ChessPiece.Side.BLACK: black_king = chess_board[row][col]
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
+## Gets the phyiscal location of the chess piece on the 3D board. 
+func get_cell_center(location: Vector2)->Vector3:
+	# TODO: Fix this hack
+	var offset = abs(second_square_marker.position-first_square_marker.position).x
+	return Vector3((7-location.y)*offset,0,(7-location.x)*offset)+first_square_marker.position
 #=== Overloaded
 func _to_string() -> String:
 	var out_str := ""
@@ -249,3 +243,10 @@ func _to_string() -> String:
 		out_str += "\n"
 	out_str += "     0    1    2    3    4    5    6    7 "
 	return out_str
+#=== Helpers
+func threats_to_opposing_king() -> Array[ChessPiece]:
+	var res: Array[ChessPiece]
+	match turn_owner:
+		ChessPiece.Side.BLACK: return rule_engine.get_threats(white_king)
+		ChessPiece.Side.WHITE: return rule_engine.get_threats(black_king)
+	return res
