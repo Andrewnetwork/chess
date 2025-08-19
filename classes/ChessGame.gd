@@ -26,6 +26,8 @@ const classic_piece_layout = [
 @export var checking_adornment: PackedScene
 @export var move_marker: PackedScene
 @export var unsafe_move_marker: PackedScene
+@export var white_king_camera: Camera3D
+@export var black_king_camera: Camera3D
 #
 ## Reference to the physical model of the chess board. 
 @export var board: Node3D
@@ -96,7 +98,10 @@ func clear_check_display():
 		board.remove_child(check_adornment)
 		check_adornment.queue_free()
 func check_mate():
-	print("Check mate!")
+	if turn_owner == ChessPiece.Side.WHITE:
+		white_king_camera.current = true
+	else:
+		black_king_camera.current = true
 func display_check(checking_piece_location):
 	animation_player.play("check")
 	var marker := checking_adornment.instantiate() as StaticBody3D
@@ -131,6 +136,8 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 		checking_piece = null
 		clear_check_display()
 	if rule_engine.get_possible_moves(piece).is_checking():
+		# TODO, WARNING: this does not cover the revealed check case. We should check if the king 
+		# is safe and then identify the checking piece. 
 		is_in_check = true
 		checking_piece = piece
 		if rule_engine.is_check_mate():
