@@ -48,7 +48,7 @@ func _init(parent_game: ChessGame):
 	game = parent_game
 #=== Main Functions
 ## Returns the possible moves for a given chess piece. 
-func get_possible_moves(piece: ChessPiece, second_pass:=true) -> Moves:
+func get_possible_moves(piece: ChessPiece, check_pass:=true) -> Moves:
 	var moves := Moves.new()
 	if piece == null:
 		push_error("Unable to apply rule to %s."%[str(piece)])
@@ -97,16 +97,8 @@ func get_possible_moves(piece: ChessPiece, second_pass:=true) -> Moves:
 			else:
 				idx += 1
 		#=== Second pass: prune moves that violate checking rules. 
-		
-		if second_pass:
+		if check_pass:
 			## Prune unsafe moves, where king moves into check. 
-			#if piece.type == ChessPiece.Type.KING:
-				#for possible_move in moves.get_all():
-					#if !is_square_safe(piece, possible_move):
-						#moves.remove(possible_move)
-						#moves.unsafe_moves.append(possible_move)
-						
-			# Prune moves if king is in check and the move does not remove the king from check. 
 			for possible_move in moves.get_all():
 				if !move_secures_king(piece, possible_move):
 					moves.remove(possible_move)

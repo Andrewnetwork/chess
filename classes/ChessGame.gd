@@ -28,6 +28,9 @@ const classic_piece_layout = [
 @export var unsafe_move_marker: PackedScene
 @export var white_king_camera: Camera3D
 @export var black_king_camera: Camera3D
+@export var black_win_screen: ColorRect
+@export var white_win_screen: ColorRect
+
 #
 ## Reference to the physical model of the chess board. 
 @export var board: Node3D
@@ -102,8 +105,10 @@ func clear_check_display():
 func check_mate():
 	if turn_owner == ChessPiece.Side.WHITE:
 		white_king_camera.current = true
+		white_win_screen.visible = true
 	else:
 		black_king_camera.current = true
+		black_win_screen.visible = true
 func threats_to_opposing_king() -> Array[ChessPiece]:
 	var res: Array[ChessPiece]
 	match turn_owner:
