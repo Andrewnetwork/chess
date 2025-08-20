@@ -92,6 +92,9 @@ func adorn_checking_pieces(checking_piece_location):
 	adornment.position = get_cell_center(checking_piece_location)
 	board.add_child(adornment)
 	check_adornments.append(adornment)
+func new_game():
+	get_tree().reload_current_scene()
+
 #=== Game loop
 ## The main function of the game loop. Called when a player clicks on a 
 ## valid move displayed via [code]display_available_moves()[/code].
