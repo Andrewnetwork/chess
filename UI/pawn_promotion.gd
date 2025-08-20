@@ -1,3 +1,4 @@
+class_name PawnPromotionScreen
 extends Control
 
 signal promotion_selected(piece: ChessPiece)
@@ -9,12 +10,16 @@ func _ready() -> void:
 
 func _queen_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.QUEEN)
+	self.queue_free()
 func _bishop_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.BISHOP)
+	self.queue_free()
 func _rook_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.ROOK)
+	self.queue_free()
 func _knight_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.KNIGHT)
+	self.queue_free()
 	
 func change_color(new_color: ChessPiece.Side):
 	if is_node_ready():
