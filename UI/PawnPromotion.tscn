@@ -1,0 +1,144 @@
+[gd_scene load_steps=5 format=3 uid="uid://cjam8676t4siv"]
+
+[ext_resource type="Script" uid="uid://b1tudtaeyv763" path="res://UI/pawn_promotion.gd" id="1_gjao7"]
+[ext_resource type="Script" uid="uid://b2tu7eu0l8l8r" path="res://classes/UI/SubViewportButton.gd" id="2_gjao7"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_gjao7"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_7r8y4"]
+blend_mode = 2
+
+[node name="PawnPromotion" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gjao7")
+color = 1
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(1, 1, 1, 0.501961)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -506.0
+offset_top = -400.0
+offset_right = 506.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="QueenButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("2_gjao7")
+metadata/_custom_type_script = "uid://b2tu7eu0l8l8r"
+
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/QueenButton"]
+own_world_3d = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(250, 250)
+render_target_update_mode = 4
+
+[node name="RookButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+focus_neighbor_right = NodePath("../BishopButton")
+mouse_default_cursor_shape = 2
+script = ExtResource("2_gjao7")
+metadata/_custom_type_script = "uid://b2tu7eu0l8l8r"
+
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/RookButton"]
+own_world_3d = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(250, 250)
+render_target_update_mode = 4
+
+[node name="BishopButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+mouse_default_cursor_shape = 2
+script = ExtResource("2_gjao7")
+metadata/_custom_type_script = "uid://b2tu7eu0l8l8r"
+
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/BishopButton"]
+own_world_3d = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(250, 250)
+render_target_update_mode = 4
+
+[node name="KnightButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("2_gjao7")
+metadata/_custom_type_script = "uid://b2tu7eu0l8l8r"
+
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/KnightButton"]
+own_world_3d = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(250, 250)
+size_2d_override = Vector2i(250, 250)
+render_target_update_mode = 4
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="."]
+material = SubResource("CanvasItemMaterial_gjao7")
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.455
+anchor_top = -0.16
+anchor_right = 0.455
+anchor_bottom = -0.16
+offset_left = -452.16
+offset_top = 151.68
+offset_right = 559.84
+offset_bottom = 336.68
+theme_override_font_sizes/normal_font_size = 82
+bbcode_enabled = true
+text = "[u]Pawn Promotion[/u]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+material = SubResource("CanvasItemMaterial_7r8y4")
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.455
+anchor_top = -0.16
+anchor_right = 0.455
+anchor_bottom = -0.16
+offset_left = -454.16
+offset_top = 148.68
+offset_right = 557.84
+offset_bottom = 333.68
+theme_override_font_sizes/normal_font_size = 82
+bbcode_enabled = true
+text = "[u]Pawn Promotion[/u]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="HBoxContainer/QueenButton" to="." method="_queen_clicked"]
+[connection signal="pressed" from="HBoxContainer/RookButton" to="." method="_rook_clicked"]
+[connection signal="pressed" from="HBoxContainer/BishopButton" to="." method="_bishop_clicked"]
+[connection signal="pressed" from="HBoxContainer/KnightButton" to="." method="_knight_clicked"]

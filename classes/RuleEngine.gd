@@ -104,7 +104,6 @@ func get_possible_moves(piece: ChessPiece, check_pass:=true) -> Moves:
 					moves.remove(possible_move)
 					moves.unsafe_moves.append(possible_move)
 	return moves
-		
 ## Checks if a game in the state of check is check mate.
 func is_check_mate():
 	# Super lazy. TODO cleanup
@@ -118,8 +117,7 @@ func is_check_mate():
 						return false
 		return true
 	else:
-		return false
-	
+		return false	
 func move_secures_king(piece: ChessPiece, move: Vector2i):
 	# Simulate move. 
 	var swap = game.chess_board[move.x][move.y]
@@ -168,8 +166,7 @@ func get_pieces_within_range(location: Vector2i, loc_range: Vector2i, side = nul
 						pieces_within_range.append(_B(loc))
 				else:
 					pieces_within_range.append(loc)
-	return pieces_within_range
-	
+	return pieces_within_range	
 func is_empty_square(move: Vector2i):
 	return is_move_within_board(move) and _B(move) == EMPTY_SQUARE
 func _B(position: Vector2i)->ChessPiece:

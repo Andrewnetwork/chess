@@ -1,3 +1,4 @@
+@icon("res://icons/ChessPiece.svg")
 class_name ChessPiece
 extends Node
 

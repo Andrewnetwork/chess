@@ -1,7 +1,8 @@
 class_name ChessGame
 extends Node
-## The controller/model for the game. 
+## A chess game in 3D. 
 
+#=== Enums and Constants
 enum {E, BR, BN, BB, BQ, BK, BP, WR, WN, WB, WQ, WK, WP}
 enum {WHITE_STARTING_ROW = 6, BLACK_STARTING_ROW = 1}
 const EMPTY_SQUARE = null
@@ -14,7 +15,8 @@ const classic_piece_layout = [
 	[E,  E,  E,  E,  E,  E,  E,  E ], #5
 	[WP, WP, WP, WP, WP, WP, WP, WP], #6
 	[WR, WN, WB, WQ, WK, WB, WN, WR]] #7
-
+	#0   1   2   3   4   5   6   7
+#=== Exports
 @export_group("Gameplay")
 ## Turn on to rotate the board before starting a turn.
 @export var turn_rotation = true
@@ -23,22 +25,24 @@ const classic_piece_layout = [
 @export var first_square_marker: Marker3D
 @export var second_square_marker: Marker3D
 @export var animation_player: AnimationPlayer
+
+@export var white_king_camera: Camera3D
+@export var black_king_camera: Camera3D
+@export var board: Node3D
+@export var sfx_player: AudioStreamPlayer
+@export_subgroup("Visuals")
 @export var checking_adornment: PackedScene
 @export var move_marker: PackedScene
 @export var unsafe_move_marker: PackedScene
-@export var white_king_camera: Camera3D
-@export var black_king_camera: Camera3D
+@export_subgroup("UI")
+@export var pawn_promotion_screen: PackedScene
 @export var black_win_screen: ColorRect
 @export var white_win_screen: ColorRect
-
-#
 ## Reference to the physical model of the chess board. 
-@export var board: Node3D
-@export var sfx_player: AudioStreamPlayer
 
 @export_group("Sound Effects")
 @export var piece_move_sound: AudioStream = preload("res://sound/piece_move.mp3")
-
+#=== Game State
 ## Matrix representing the logical model of the chess board. 
 var chess_board: Array[Array]
 var is_in_check := false
@@ -46,11 +50,11 @@ var turn_owner := ChessPiece.Side.WHITE
 var active_piece: ChessPiece
 var white_king: ChessPiece
 var black_king: ChessPiece
-
+#=== Rule Engine
+var rule_engine = RuleEngine.new(self)
+#=== UI Properties
 var move_markers: Array[StaticBody3D]
 var check_adornments : Array[StaticBody3D]
-var rule_engine = RuleEngine.new(self)
-
 #=== UI
 ## Displays available moves for the given piece by placing clickable MoveMarker's 
 ## on the chess board.
@@ -89,6 +93,8 @@ func adorn_checking_pieces(checking_piece_location):
 	board.add_child(adornment)
 	check_adornments.append(adornment)
 #=== Game loop
+## The main function of the game loop. Called when a player clicks on a 
+## valid move displayed via [code]display_available_moves()[/code].
 func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var target_square = chess_board[new_location.x][new_location.y]
 	if target_square != EMPTY_SQUARE:
@@ -110,12 +116,16 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	var new_pos = get_cell_center(new_location)
 	piece.obj_ref.position.x = new_pos.x
 	piece.obj_ref.position.z = new_pos.z
-	# Check if this move puts the opposing king in check.
+	# Pawn promtion. 
+	if piece.type == ChessPiece.Type.PAWN && ((piece.color == ChessPiece.Side.WHITE && piece.location.x == 0) || 
+		(piece.color == ChessPiece.Side.BLACK && piece.location.x == 7)):
+		promote_pawn(piece)
+	# Checking logic.
 	if is_in_check:
 		#Moved out of check.
 		is_in_check = false
 		clear_check_display()
-		
+	# Check if this move puts the opposing king in check.
 	var threats_to_king := threats_to_opposing_king()
 	if len(threats_to_king) > 0:
 		is_in_check = true
@@ -142,6 +152,10 @@ func start_next_turn():
 	var tween = create_tween()
 	tween.tween_property(board, "rotation_degrees:y", 
 		board.rotation_degrees.y-180, 2 ).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+func promote_pawn(piece: ChessPiece):
+	var pawn_promotion = pawn_promotion_screen.instantiate()
+	pawn_promotion.color = piece.color
+	board.add_child(pawn_promotion)
 func check_mate():
 	if turn_owner == ChessPiece.Side.WHITE:
 		white_king_camera.current = true
@@ -220,7 +234,7 @@ func setup_board(piece_layout: Array):
 func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
 	return get_node(pieces[color][piece][number])
 ## Gets the phyiscal location of the chess piece on the 3D board. 
-func get_cell_center(location: Vector2)->Vector3:
+func get_cell_center(location: Vector2) -> Vector3:
 	# TODO: Fix this hack
 	var offset = abs(second_square_marker.position-first_square_marker.position).x
 	return Vector3((7-location.y)*offset,0,(7-location.x)*offset)+first_square_marker.position
