@@ -5,9 +5,10 @@ signal promotion_selected(piece: ChessPiece)
 
 @export var color : ChessPiece.Side : set = change_color
 var pice_previews: Array[Piece3D]
-func _ready() -> void:
-	change_color(color)
 
+func _ready():
+	update_viewports()
+	
 func _queen_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.QUEEN)
 	self.queue_free()
@@ -20,14 +21,12 @@ func _rook_clicked():
 func _knight_clicked():
 	emit_signal("promotion_selected", ChessPiece.Type.KNIGHT)
 	self.queue_free()
-	
-func change_color(new_color: ChessPiece.Side):
+
+func update_viewports():
 	if is_node_ready():
-		color = new_color
-		
 		for p in pice_previews:
 			p.queue_free()
-			
+				
 		var queen = preload("res://objects/Piece.tscn").instantiate() as Piece3D
 		queen.select(color, ChessPiece.Type.QUEEN)
 		$HBoxContainer/QueenButton/SubViewport.add_child(queen)
@@ -47,5 +46,7 @@ func change_color(new_color: ChessPiece.Side):
 		knight.select(color, ChessPiece.Type.KNIGHT)
 		$HBoxContainer/KnightButton/SubViewport.add_child(knight)
 		pice_previews.append(knight)
-	else: 
-		color = ChessPiece.Side.WHITE
+		
+func change_color(new_color: ChessPiece.Side):
+	color = new_color
+	update_viewports()

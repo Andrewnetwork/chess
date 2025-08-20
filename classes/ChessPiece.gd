@@ -45,6 +45,17 @@ func get_type_str()->String:
 	return type_str[type]
 func get_id()->int:
 	return piece_count_id
+func promote(promotion_type: ChessPiece.Type):
+	var pieces = preload("res://objects/Piece.tscn").instantiate() as Piece3D
+	# Really sloppy. TODO cleanup
+	# WARNING this will cause problems if we ever get around to actually using 
+	# the rigid bodies. We are just swapping meshes and ignoring the collision shape, etc. 
+	for child in obj_ref.get_children():
+		if child is MeshInstance3D:
+			for child_m in pieces.select(color, promotion_type).get_children():
+				if child_m is MeshInstance3D:
+					child.mesh = child_m.mesh
+	type = promotion_type
 func eliminate():
 	obj_ref.queue_free()
 	queue_free()

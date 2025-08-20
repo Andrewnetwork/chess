@@ -119,18 +119,7 @@ func move_piece(piece: ChessPiece, new_location: Vector2i) -> bool:
 	# Pawn promtion. 
 	if piece.type == ChessPiece.Type.PAWN && ((piece.color == ChessPiece.Side.WHITE && piece.location.x == 0) || 
 		(piece.color == ChessPiece.Side.BLACK && piece.location.x == 7)):
-		# TODO, clean this up
-		var promotion_type := await promote_pawn(piece)
-		piece.obj_ref.queue_free()
-		var pieces = preload("res://objects/Piece.tscn").instantiate() as Piece3D
-		piece.obj_ref = pieces.select(piece.color, promotion_type)
-		piece.obj_ref.position.x = new_pos.x
-		piece.obj_ref.position.z = new_pos.z
-		chess_board[new_location.x][new_location.y].type = promotion_type
-		board.add_child(piece.obj_ref)
-		# TODO: HEY andrew of tomrrow! What's up!?😜 Hope you're having a good day.
-		# here's the problem: there is no event handler attached to the new obj_ref model. 
-		# Also, we position the model too low. Take care ✌✌✌
+		piece.promote(await promote_pawn(piece))
 	# Checking logic.
 	if is_in_check:
 		#Moved out of check.
