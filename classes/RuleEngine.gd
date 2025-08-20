@@ -29,7 +29,7 @@ const RULES = {
 	ChessPiece.Type.PAWN:{
 		"movement_axes": [N],
 		"take": [NW, NE],
-		"conditional_moves": {"STARTING_ROW": [N*2]}
+		"conditional_max_distance": {"STARTING_ROW": 2}
 	},
 	ChessPiece.Type.ROOK:{
 		"movement_axes": [N,S,E,W],
@@ -60,12 +60,13 @@ func get_possible_moves(piece: ChessPiece, check_pass:=true) -> Moves:
 		var move = null
 		var opponent_side = ChessPiece.Side.BLACK if piece.color == ChessPiece.Side.WHITE else ChessPiece.Side.WHITE
 		var flip = -1 if piece.color == ChessPiece.Side.WHITE  else 1
+		var max_distance = 1 if !rule.has("max_distance") else rule.max_distance
 		
 		#== First pass: generate possible moves.
-		if rule.has("conditional_moves"):
-			if rule.conditional_moves.has("STARTING_ROW"):
+		if rule.has("conditional_max_distance"):
+			if rule.conditional_max_distance.has("STARTING_ROW"):
 				if (piece.color == ChessPiece.Side.WHITE && piece.location.x == WHITE_STARTING_ROW) or (piece.color == ChessPiece.Side.BLACK && piece.location.x == BLACK_STARTING_ROW):
-					movement_axes += rule.conditional_moves["STARTING_ROW"]
+					max_distance = 2
 		# Add moves if this piece can take along a specified axis. 
 		if rule.has("take"):
 			for take_move in rule.take:
@@ -92,7 +93,7 @@ func get_possible_moves(piece: ChessPiece, check_pass:=true) -> Moves:
 			if idx+1 >= len(movement_axes):
 				idx = 0
 				distance += 1
-				if !rule.has("max_distance") || distance > rule.max_distance:
+				if distance > max_distance:
 					break
 			else:
 				idx += 1
