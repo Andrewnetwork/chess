@@ -1,6 +1,8 @@
+# Chess 
 
-# TODO
+![Game screenshot.](screenshot.JPG)
 
-> Write a script to convert the collision shapes to a simpler geometry. Do this to avoid jiggling. 
+<center>
+    <a href="https://andrewnetwork.github.io/chess/EXPORT/Web/Chess.html">PLAY</a>
+</center>
 
-https://andrewnetwork.github.io/chess/EXPORT/Web/Chess.html
