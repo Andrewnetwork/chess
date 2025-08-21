@@ -84,12 +84,12 @@ size = Vector3(0.055, 0.055, 0.05)
 [node name="MoveMarker" type="StaticBody3D"]
 
 [node name="possible_move_ball" type="MeshInstance3D" parent="."]
-transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, 0, 0)
+transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, -0.016, 0)
 mesh = ExtResource("1_i001w")
 surface_material_override/0 = SubResource("StandardMaterial3D_ug5jf")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, 0.00184812, 0)
+transform = Transform3D(-0.03, 4.52987e-09, 0, -4.52987e-09, -0.03, 0, 0, 0, 0.03, 0, -0.016, 0)
 shape = SubResource("ConvexPolygonShape3D_i001w")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]

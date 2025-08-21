@@ -235,7 +235,7 @@ func setup_board(piece_layout: Array):
 					match piece_color:
 						ChessPiece.Side.WHITE: white_king = chess_board[row][col]
 						ChessPiece.Side.BLACK: black_king = chess_board[row][col]
-func get_physical_piece(color: String, piece: String, number: int) -> RigidBody3D:
+func get_physical_piece(color: String, piece: String, number: int) -> Node3D:
 	return get_node(pieces[color][piece][number])
 ## Gets the phyiscal location of the chess piece on the 3D board. 
 func get_cell_center(location: Vector2) -> Vector3:

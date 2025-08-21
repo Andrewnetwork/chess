@@ -11,7 +11,7 @@ var color: ChessPiece.Side
 var type: ChessPiece.Type
 var location: Vector2i
 var piece_count_id: int
-var obj_ref: RigidBody3D
+var obj_ref: Node3D
 	
 func _to_string() -> String:
 	return "<ChessPiece:"+get_color_str()+"_"+get_type_str()+"_"+str(piece_count_id)+">"
